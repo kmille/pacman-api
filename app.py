@@ -14,7 +14,7 @@ makedirs(tmp_dir, exist_ok=True)
 
 @app.route("/info", methods=['GET', 'POST'])
 def get_info():
-    if exists("var/lib/pacman/db.lck"):
+    if exists("/var/lib/pacman/db.lck"):
         return jsonify({'error': 'pacman currently in use'})
     package = request.get_json(force=True)['package']
     return jsonify(pacman.get_info(package))
@@ -22,7 +22,7 @@ def get_info():
 
 @app.route("/install", methods=['GET', 'POST'])
 def install():
-    if exists("var/lib/pacman/db.lck"):
+    if exists("/var/lib/pacman/db.lck"):
         return jsonify({'error': 'pacman currently in use'})
     package = request.get_json(force=True)['package']
     pacman.install(package)
