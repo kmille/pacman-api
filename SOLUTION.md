@@ -43,7 +43,7 @@ def install():
     return jsonify({'status': 'OK'})
 ```
 
-As we use json we can send `package` as a list instead of a string. This will allow us to inject something in the `subprocess.Popen` call. It does not allow us to injection arbitrary commands. But it allow us to inject some parameters. `pacman` allows us to run hooks after/before installing a package. This is how we will get code exection. Therefore, we need to upload a file to the server. Therefore we can exploit the `/check` api backend with a little trick.
+As we use json we can send `package` as a list instead of a string. This will allow us to inject something in the `subprocess.Popen` call. It does not allow us to inject arbitrary commands. But it allow us to inject some command line parameters. `pacman` allows us to run hooks after/before installing a package. This is how we will get code exection. Therefore, we need to upload a file to the server. Therefore we can exploit the `/check` api backend with a little trick.
 
 ```python
 @app.route("/check", methods=['GET', 'POST'])
